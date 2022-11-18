@@ -30,7 +30,7 @@ contract WavePortal {
      */
     Wave[] waves;
 
-    constructor() {
+    constructor() payable {
         console.log("Sou um contrato inteligente");
     }
 
@@ -55,7 +55,7 @@ contract WavePortal {
             prizeAmount <= address(this).balance, "tentando retirar mais dinheiro do que tem o contrato"
         );    
         (bool success, ) = (msg.sender).call{value: prizeAmount}(""); //enviamos o dinheiro
-        require(success, "Falha ao sacar");
+        require(success, "Falha ao sacar"); //se sucesso ok, caso contrario lança mensagem
     }
    
     /*
