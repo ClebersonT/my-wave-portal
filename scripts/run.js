@@ -1,7 +1,6 @@
 //npx hardhat run scripts/run.js
 
 const main = async () => {
-    const [owner, randomPerson] = await hre.ethers.getSigners();
     //compila contrato
     const waveContractFactory = await hre.ethers.getContractFactory("WavePortal");
     /*Hardhat criará uma rede Ethereum local para nós,
@@ -11,23 +10,24 @@ const main = async () => {
     const waveContract = await waveContractFactory.deploy();
     //sempre recomeça clean
     await waveContract.deployed();
-    //print
-    console.log("Contract deployed to:", waveContract.address);
-    //dono do contrato
-    console.log("Contract deployed by:", owner.address);
 
-    //Basicamente é assim que podemos simular outras pessoas acessando nossas funções
-    await waveContract.getTotalWaves();
+    let waveCount;
+    waveCount = await waveContract.getTotalWaves();
+    console.log(waveCount.toNumber());
+    
+   /**
+    * Vamos enviar algumas ondas / acenos
+    */
 
-    const firstWaveTxn = await waveContract.wave();
-    await firstWaveTxn.wait();
-  
-    await waveContract.getTotalWaves();
-  
-    const secondWaveTxn = await waveContract.connect(randomPerson).wave();
-    await secondWaveTxn.wait();
-  
-    await waveContract.getTotalWaves();
+   let waveTxn = await waveContract.wave("uma mensagem");
+   await waveTxn.wait(); // esperando ser minerada a transação
+
+   const [_, randomPerson] = await hre.ethers.getSigners();
+   waveTxn = await waveContract.connect(randomPerson).wave("outra menssagem!");
+   await waveTxn.wait(); // esperando ser minerada a transação
+
+   let allWaves = await waveContract.getAllWaves();
+   console.log(allWaves);
   };
   
   const runMain = async () => {
