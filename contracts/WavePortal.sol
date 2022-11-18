@@ -59,8 +59,8 @@ contract WavePortal {
         *Precisamos garantir que o registro de data e hora atual seja pelo menos 15 minutos maior do que o último registro de data e hora que armazenamos
         */
         require(
-            lastWavedAt[msg.sender] + 15 minutes < block.timestamp,
-            "Wait 15m"
+            lastWavedAt[msg.sender] + 30 seconds < block.timestamp,
+            "Aguarde 30 segundos e tente novamente"
         );
 
          /*
