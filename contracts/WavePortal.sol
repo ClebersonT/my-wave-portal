@@ -11,6 +11,12 @@ import "hardhat/console.sol";
 contract WavePortal {
     uint256 totalWaves;
 
+
+    /*
+     * We will be using this below to help generate a random number
+     */
+    uint256 private seed;
+
       /*
      * eventos solidity!
      */
@@ -30,8 +36,18 @@ contract WavePortal {
      */
     Wave[] waves;
 
+    /*
+    * Este é um endereço => mapeamento uint, o que significa que posso associar um endereço a um número!
+    * Neste caso, estarei armazenando o endereço com a última vez que o usuário acenou para nós.
+    */
+    mapping(address => uint256) public lastWavedAt;
+
     constructor() payable {
         console.log("Sou um contrato inteligente");
+         /*
+         * Set the initial seed
+         */
+        seed = (block.timestamp + block.difficulty) % 100;
     }
 
     //msg.sender => endereço da carteira de quem chamou a função
@@ -39,6 +55,19 @@ contract WavePortal {
 
     //mudando um pouquinho... usuario me envia no front-end
     function wave(string memory _message) public {
+        /** 
+        *Precisamos garantir que o registro de data e hora atual seja pelo menos 15 minutos maior do que o último registro de data e hora que armazenamos
+        */
+        require(
+            lastWavedAt[msg.sender] + 15 minutes < block.timestamp,
+            "Wait 15m"
+        );
+
+         /*
+         * atualizamos o timestamp que temos para o user
+         */
+        lastWavedAt[msg.sender] = block.timestamp;
+
         totalWaves += 1;
         console.log("%s Acenou!", msg.sender, _message);
     
@@ -46,16 +75,29 @@ contract WavePortal {
         * armazenando os dados no array
         */
         waves.push(Wave(msg.sender, _message, block.timestamp));
+
+         /*
+         * Generate a new seed for the next user that sends a wave
+         */
+        seed = (block.difficulty + block.timestamp + seed) % 100;
+
+        console.log("Random # generated: %d", seed);
+
+        if (seed < 50) {
+            console.log("%s won!", msg.sender);
+
+            //envio de eth para quem acenar
+            //saldo do meu contrato: address(this).balance
+            uint256 prizeAmount = 0.0001 ether;
+            require(
+                prizeAmount <= address(this).balance,
+                "tentativa de sacar mais do que o contrato tem em dinheiro."
+            );
+            (bool success, ) = (msg.sender).call{value: prizeAmount}("");
+            require(success, "Falha ao sacar.");
+        }
+
         emit NewWave(msg.sender, block.timestamp, _message);
-    
-        //envio de eth para quem acenar
-        //saldo do meu contrato: address(this).balance
-        uint256 prizeAmount = 0.0001 ether;
-        require(
-            prizeAmount <= address(this).balance, "tentando retirar mais dinheiro do que tem o contrato"
-        );    
-        (bool success, ) = (msg.sender).call{value: prizeAmount}(""); //enviamos o dinheiro
-        require(success, "Falha ao sacar"); //se sucesso ok, caso contrario lança mensagem
     }
    
     /*
